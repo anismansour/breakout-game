@@ -27,21 +27,21 @@ function createPad() {
   ctx.fillRect(pad.x, pad.y, pad.sizeW, pad.sizeH);
 }
 
-function createBricks() {
-  ctx.fillStyle = "blue";
-  ctx.fillRect(20, 20, 100, 50);
-  ctx.fillRect(140, 20, 100, 50);
-  ctx.fillRect(260, 20, 100, 50);
-  ctx.fillRect(380, 20, 100, 50);
-  ctx.fillRect(20, 90, 100, 50);
-  ctx.fillRect(140, 90, 100, 50);
-  ctx.fillRect(260, 90, 100, 50);
-  ctx.fillRect(380, 90, 100, 50);
-  ctx.fillRect(20, 160, 100, 50);
-  ctx.fillRect(140, 160, 100, 50);
-  ctx.fillRect(260, 160, 100, 50);
-  ctx.fillRect(380, 160, 100, 50);
-}
+// function createBricks() {
+//   ctx.fillStyle = "blue";
+//   ctx.fillRect(20, 20, 100, 50);
+//   ctx.fillRect(140, 20, 100, 50);
+//   ctx.fillRect(260, 20, 100, 50);
+//   ctx.fillRect(380, 20, 100, 50);
+//   ctx.fillRect(20, 90, 100, 50);
+//   ctx.fillRect(140, 90, 100, 50);
+//   ctx.fillRect(260, 90, 100, 50);
+//   ctx.fillRect(380, 90, 100, 50);
+//   ctx.fillRect(20, 160, 100, 50);
+//   ctx.fillRect(140, 160, 100, 50);
+//   ctx.fillRect(260, 160, 100, 50);
+//   ctx.fillRect(380, 160, 100, 50);
+// }
 // create ball  method :
 // ctx.beginPath();
 // ctx.arc(200, 450, 20, 0, Math.PI * 2);
@@ -49,12 +49,80 @@ function createBricks() {
 // ctx.fill();  to fill
 // ctx.stroke();
 
+//create bricks
+const brick = {
+  row: 3,
+  column: 5,
+  width: 77,
+  height: 30,
+  offSetLeft: 20,
+  offSetTop: 20,
+  marginTop: 40,
+  fillColor: "blue",
+  strokeColor: "#FFF"
+};
+let bricks = [];
+
+function createBricks() {
+  for (let r = 0; r < brick.row; r++) {
+    bricks[r] = [];
+    for (let c = 0; c < brick.column; c++) {
+      bricks[r][c] = {
+        x: c * (brick.offSetLeft + brick.width) + brick.offSetLeft,
+        y:
+          r * (brick.offSetTop + brick.height) +
+          brick.offSetTop +
+          brick.marginTop,
+        status: true
+      };
+    }
+  }
+}
+createBricks();
+
+function drawBricks() {
+  for (let r = 0; r < brick.row; r++) {
+    for (let c = 0; c < brick.column; c++) {
+      let b = bricks[r][c];
+      // if the brick isn't broken
+      if (b.status) {
+        ctx.fillStyle = brick.fillColor;
+        ctx.fillRect(b.x, b.y, brick.width, brick.height);
+
+        ctx.strokeStyle = brick.strokeColor;
+        ctx.strokeRect(b.x, b.y, brick.width, brick.height);
+      }
+    }
+  }
+}
+
+//ball collision with bricks
+
+function ballBrickCollision() {
+  for (let r = 0; r < brick.row; r++) {
+    for (let c = 0; c < brick.column; c++) {
+      let b = bricks[r][c];
+      // if the brick isn't broken
+      if (b.status) {
+        if (
+          ball.x + ball.size > b.x &&
+          ball.x - ball.size < b.x + brick.width &&
+          ball.y + ball.size > b.y &&
+          ball.y - ball.size < b.y + brick.height
+        ) {
+          ball.dy = -ball.dy;
+          b.status = false; // the brick is broken
+        }
+      }
+    }
+  }
+}
 //create a ball with a variable ball
 
 const ball = {
   x: 200,
-  y: 150,
-  size: 20,
+  y: 480,
+  size: 15,
   dx: 4, //to move x direction
   dy: 3 // to move y direction
 };
@@ -62,7 +130,7 @@ const ball = {
 function createBall() {
   ctx.beginPath();
   ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
-  ctx.fillStyle = "yellow";
+  ctx.fillStyle = "black";
   ctx.fill();
   ctx.stroke();
 }
@@ -80,11 +148,16 @@ function BallDetectWall() {
   if (ball.x + ball.size > canvas.width || ball.x - ball.size < 0) {
     ball.dx *= -1;
   }
-  if (ball.y + ball.size > canvas.height || ball.y - ball.size < 0) {
+  if (ball.y - ball.size < 0) {
     ball.dy *= -1;
   }
 }
 
+function gameOver() {
+  if (ball.y + ball.size > canvas.height) {
+    location.reload();
+  }
+}
 function padDetectWall() {
   if (pad.x < 0) {
     pad.x = 0;
@@ -124,6 +197,7 @@ function ballDetectPad() {
   if (ball.y + ball.size >= 500) {
     if (ballCenter > pad.x && ballCenter < pad.x + pad.sizeW) {
       ball.dy *= -1;
+      //location.reload();
     }
   }
 }
@@ -142,11 +216,14 @@ function animate() {
   clear();
   createBall();
   createPad();
-  createBricks();
+
+  drawBricks();
   moveBall();
   BallDetectWall();
   padNewPosition();
   ballDetectPad();
+  ballBrickCollision();
+  gameOver();
 
   requestAnimationFrame(animate);
 }
